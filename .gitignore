@@ -3,3 +3,6 @@ devel/
 .catkin_workspace
 src/CMakeLists.txt
 **/__pycache__/
+.DS_Store
+src/.DS_Store
+*.DS_Store
