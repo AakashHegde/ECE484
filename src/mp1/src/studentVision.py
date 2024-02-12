@@ -79,11 +79,16 @@ class lanenet_detector():
         Convert RGB to HSL and threshold to binary image using S channel
         """
         #1. Convert the image from RGB to HSL
+        hsvImg = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         #2. Apply threshold on S channel to get binary image
         #Hint: threshold on H to remove green grass
-        ## TODO
-
-        ####
+        lower_yellow = np.array([20, 100, 100])
+        upper_yellow = np.array([30, 255, 255])
+        lower_white = np.array([0,0,180])
+        upper_white = np.array([255,75,255])
+        yellowImg = cv2.inRange(hsvImg, lower_yellow, upper_yellow)
+        whiteImg = cv2.inRange(hsvImg, lower_white, upper_white)
+        binary_output = cv2.add(yellowImg, whiteImg)
 
         return binary_output
 
