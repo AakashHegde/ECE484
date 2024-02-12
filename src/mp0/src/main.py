@@ -11,6 +11,15 @@ from positionDetector import PositionDetector
 from safetyDetector import SafetyDetector
 
 import numpy as np
+# import csv
+result_t = []
+result_x1 = []
+result_x2 = []
+result_d = []
+
+pedPositionCustom = 60
+
+import matplotlib.pyplot as plt
 
 def getStoppingPoint(carPos, pedPos, stopDistance=1):
     carPos = np.array([carPos.pose.position.x, carPos.pose.position.y])
@@ -24,6 +33,7 @@ def getStoppingPoint(carPos, pedPos, stopDistance=1):
 
 
 def run_model(d_safe = 15,v_0 = 10, a_b = 5, t_react = 0):
+    global result_t, result_x1, result_x2, result_d
     resolution = 0.1
     side_range = (-10, 10)
     fwd_range = (0., 25.)
@@ -60,9 +70,11 @@ def run_model(d_safe = 15,v_0 = 10, a_b = 5, t_react = 0):
     start_brake = False
 
     unsafe_time = -0.01
+    ros_time = 0.0
     
     while not rospy.is_shutdown():
         rate.sleep()  # Wait a while before trying to get a new state
+        ros_time += 0.01
 
         # Get the current position and orientation of the vehicle
         currState =  model.getModelState()
@@ -81,6 +93,10 @@ def run_model(d_safe = 15,v_0 = 10, a_b = 5, t_react = 0):
         # Compute the distance between pedestrian and vehicle. Check if vehilce is within safety distance from the pedestrian
         safe, pedPosition, distance = safety.checkSafety(currState, pedImgPosition)
 
+        result_t.append(ros_time)
+        result_x1.append(pedPositionCustom)
+        result_x2.append(currState.pose.position.x)
+        
         # Print current position of the vehicle
         # print(safe,distance,currState.pose.position.x,currState.pose.position.y)
         
@@ -119,6 +135,15 @@ def run_model(d_safe = 15,v_0 = 10, a_b = 5, t_react = 0):
 
     rospy.spin()
 
+def problem5():
+    plt.plot(result_t, result_x1, label='x1')
+    plt.plot(result_t, result_x2, label='x2')
+    plt.legend()
+    plt.xlabel('time')
+    plt.ylabel('state variables')
+    plt.title('state variables vs time')
+    plt.show()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Running vehicle with pedestrain detection')
 
@@ -140,3 +165,7 @@ if __name__ == "__main__":
     t_react = argv.t_react
 
     run_model(d_safe = d_sense, v_0 = v_0, a_b = a_b, t_react = t_react)
+
+    problem5()
+
+    

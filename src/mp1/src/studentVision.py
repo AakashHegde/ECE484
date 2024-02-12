@@ -57,10 +57,15 @@ class lanenet_detector():
         Apply sobel edge detection on input image in x, y direction
         """
         #1. Convert the image to gray scale
+        grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         #2. Gaussian blur the image
+        gaussianImg = cv2.GaussianBlur(grayImg,(5,5),0)
         #3. Use cv2.Sobel() to find derievatives for both X and Y Axis
+        sobelImg = cv2.Sobel(gaussianImg, -1, 1, 1)
         #4. Use cv2.addWeighted() to combine the results
+        weightedImg = cv2.addWeighted(img, 1, sobelImg, 1)
         #5. Convert each pixel to unint8, then apply threshold to get binary image
+        binary_output = cv2.threshold(weightedImg, thresh_min, thresh_max, cv2.THRESH_BINARY)
 
         ## TODO
 
