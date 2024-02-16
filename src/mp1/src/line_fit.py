@@ -19,14 +19,14 @@ def line_fit(binary_warped):
 	out_img = (np.dstack((binary_warped, binary_warped, binary_warped))*255).astype('uint8')
 	# Find the peak of the left and right halves of the histogram
 	# These will be the starting point for the left and right lines
-	midpoint = np.int(histogram.shape[0]/2)
+	midpoint = np.int32(histogram.shape[0]/2)
 	leftx_base = np.argmax(histogram[100:midpoint]) + 100
 	rightx_base = np.argmax(histogram[midpoint:-100]) + midpoint
 
 	# Choose the number of sliding windows
 	nwindows = 9
 	# Set height of windows
-	window_height = np.int(binary_warped.shape[0]/nwindows)
+	window_height = np.int32(binary_warped.shape[0]/nwindows)
 	# Identify the x and y positions of all nonzero pixels in the image
 	nonzero = binary_warped.nonzero()
 	nonzeroy = np.array(nonzero[0])
@@ -223,8 +223,8 @@ def bird_fit(binary_warped, ret, save_file=None):
 	right_line_pts = np.hstack((right_line_window1, right_line_window2))
 
 	# Draw the lane onto the warped blank image
-	cv2.fillPoly(window_img, np.int_([left_line_pts]), (0,255, 0))
-	cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
+	cv2.fillPoly(window_img, np.int32_([left_line_pts]), (0,255, 0))
+	cv2.fillPoly(window_img, np.int32_([right_line_pts]), (0,255, 0))
 	result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
 
 	plt.imshow(result)
@@ -265,7 +265,7 @@ def final_viz(undist, left_fit, right_fit, m_inv):
 	pts = np.hstack((pts_left, pts_right))
 
 	# Draw the lane onto the warped blank image
-	cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+	cv2.fillPoly(color_warp, np.int32_([pts]), (0,255, 0))
 
 	# Warp the blank back to original image space using inverse perspective matrix (Minv)
 	newwarp = cv2.warpPerspective(color_warp, m_inv, (undist.shape[1], undist.shape[0]))
