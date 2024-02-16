@@ -42,19 +42,26 @@ def line_fit(binary_warped):
 	left_lane_inds = []
 	right_lane_inds = []
 
+	height, width = binary_warped.shape[:2]
 	# Step through the windows one by one
 	for window in range(nwindows):
 		# Identify window boundaries in x and y (and right and left)
 		##TO DO
-
+		TopLeft = [0 , window_height * window]
+		BottomRight = [width-1 , window_height * (window + 1) - 1]
 		####
 		# Draw the windows on the visualization image using cv2.rectangle()
 		##TO DO
-
+		cv2.rectangle(binary_warped, TopLeft, BottomRight)
 		####
 		# Identify the nonzero pixels in x and y within the window
 		##TO DO
-
+		nonzeroy_window = []
+		nonzerox_window = []
+		for p in nonzero:
+			if(p[1] > TopLeft[1] and p[1] < BottomRight[1]):
+				nonzeroy_window.append(p[1])
+				nonzerox_window.append(p[0])
 		####
 		# Append these indices to the lists
 		##TO DO
