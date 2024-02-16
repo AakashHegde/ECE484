@@ -14,17 +14,18 @@ def gradient_thresh(img, thresh_min=25, thresh_max=100):
         gaussianImg = cv2.GaussianBlur(grayImg,(5,5),0)
         # cv2.imshow("gaussianImg", gaussianImg)
         # #3. Use cv2.Sobel() to find derievatives for both X and Y Axis
-        sobelImg = cv2.Sobel(gaussianImg, -1, 1, 1)
-        # cv2.imshow("sobelImg", sobelImg)
+        sobelImgX = cv2.Sobel(gaussianImg, -1, 1, 0)
+        sobelImgY = cv2.Sobel(gaussianImg, -1, 0, 1)
+        # cv2.imshow("sobelImgX", sobelImgX)
+        # cv2.imshow("sobelImgY", sobelImgY)
         # #4. Use cv2.addWeighted() to combine the results
-        weightedImg = cv2.addWeighted(gaussianImg, 1, sobelImg, 5, 0)
+        weightedImg = cv2.addWeighted(sobelImgX, 0.5, sobelImgY, 0.5, 0)
         # cv2.imshow("weightedImg", weightedImg)
         # #5. Convert each pixel to unint8, then apply threshold to get binary image
         uint8Img = cv2.convertScaleAbs(weightedImg)
         # cv2.imshow("uint8Img", uint8Img)
-        thresh, binary_output = cv2.threshold(uint8Img, 127, 255, cv2.THRESH_BINARY)
-        cv2.imshow("binary_output", binary_output)
-        binary_output = sobelImg
+        thresh, binary_output = cv2.threshold(uint8Img, 75, 255, cv2.THRESH_BINARY)
+        # cv2.imshow("binary_output", binary_output)
 
         cv2.waitKey(0)
 
@@ -45,7 +46,7 @@ def color_thresh(img, thresh=(100, 255)):
         yellowImg = cv2.inRange(hsvImg, lower_yellow, upper_yellow)
         whiteImg = cv2.inRange(hsvImg, lower_white, upper_white)
         binary_output = cv2.add(yellowImg, whiteImg)
-        # cv2.imshow("binary_output", binary_output)
+        cv2.imshow("binary_output", binary_output)
         #Hint: threshold on H to remove green grass
 
         cv2.waitKey(0)
@@ -107,7 +108,7 @@ def perspective_transform(img, verbose=False):
 img = cv2.imread('../images/road.jpg')
 cv2.imshow("img", img)
 
-gradient_thresh(img)
+# gradient_thresh(img)
 # color_thresh(img)
 # combinedBinaryImage(img)
-# perspective_transform(img)
+perspective_transform(img)
