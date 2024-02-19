@@ -114,12 +114,13 @@ class lanenet_detector():
         ####
 
         binaryImage = np.zeros_like(SobelOutput)
-        binaryImage[(ColorOutput==1)|(SobelOutput==1)] = 1
+        binaryImage[(ColorOutput==255)|(SobelOutput==255)] = 255
         # Remove noise from binary image
-        binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=50,connectivity=2)
+        # binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=50,connectivity=2)
+
+        # cv2.imshow("binaryImage", binaryImage)
 
         return binaryImage
-
 
     def perspective_transform(self, img, verbose=False):
         """
@@ -128,10 +129,14 @@ class lanenet_detector():
         height, width = img.shape[:2]
 
         #1. Visually determine 4 source points and 4 destination points
-        pt_A = [width * 0.4, height * 0.63]
+        # pt_A = [width * 0.4, height * 0.63]
+        # pt_B = [0, height-1]
+        # pt_C = [width - 1, height - 1]
+        # pt_D = [width * 0.60, height * 0.63]
+        pt_A = [width * 0.35, height * 0.55]
         pt_B = [0, height-1]
         pt_C = [width - 1, height - 1]
-        pt_D = [width * 0.60, height * 0.63]
+        pt_D = [width * 0.65, height * 0.55]
         input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
         output_pts = np.float32([[0, 0],
                         [0, height - 1],
@@ -141,7 +146,10 @@ class lanenet_detector():
         M = cv2.getPerspectiveTransform(input_pts,output_pts)
         Minv = np.linalg.inv(M)
         #3. Generate warped image in bird view using cv2.warpPerspective()
-        warped_img = cv2.warpPerspective(img,M,(width, height),flags=cv2.INTER_LINEAR)
+        warped_img = cv2.warpPerspective(img,M,(width, height))
+        
+        # cv2.imshow("warped_img", warped_img)
+        # cv2.waitKey(0)
 
         return warped_img, M, Minv
 
