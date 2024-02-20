@@ -89,7 +89,7 @@ class lanenet_detector():
         #Hint: threshold on H to remove green grass
         lower_yellow = np.array([20, 100, 100])
         upper_yellow = np.array([30, 255, 255])
-        lower_white = np.array([0,0,180])
+        lower_white = np.array([0,0,180]) #formerly 0,0,180
         upper_white = np.array([255,75,255])
         yellowImg = cv2.inRange(hsvImg, lower_yellow, upper_yellow)
         whiteImg = cv2.inRange(hsvImg, lower_white, upper_white)
@@ -116,7 +116,7 @@ class lanenet_detector():
         binaryImage = np.zeros_like(SobelOutput)
         binaryImage[(ColorOutput==255)|(SobelOutput==255)] = 255
         # Remove noise from binary image
-        # binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=50,connectivity=2)
+        binaryImage = morphology.remove_small_objects(binaryImage, min_size=64, connectivity=2)
 
         # cv2.imshow("binaryImage", binaryImage)
 
@@ -129,14 +129,25 @@ class lanenet_detector():
         height, width = img.shape[:2]
 
         #1. Visually determine 4 source points and 4 destination points
-        # pt_A = [width * 0.4, height * 0.63]
-        # pt_B = [0, height-1]
-        # pt_C = [width - 1, height - 1]
-        # pt_D = [width * 0.60, height * 0.63]
-        pt_A = [width * 0.35, height * 0.55]
-        pt_B = [0, height-1]
-        pt_C = [width - 1, height - 1]
-        pt_D = [width * 0.65, height * 0.55]
+        
+        # rosbag 0056 and 0011
+        # pt_A = [width * 0.41, height * 0.55] #top left
+        # pt_B = [width*0.20, height-1] #bottom left
+        # pt_C = [width*0.75, height - 1] #bottom right
+        # pt_D = [width * 0.6, height * 0.55] #top right 
+
+        # rosbag 0484
+        # pt_A = [width * 0.41, height * 0.5] #top left
+        # pt_B = [width*0.20, height-1] #bottom left
+        # pt_C = [width*0.75, height - 1] #bottom right
+        # pt_D = [width * 0.6, height * 0.5] #top right
+
+        #gazebo
+        pt_A = [width * 0.3, height * 0.6] #top left
+        pt_B = [0, height-10] #bottom left
+        pt_C = [width, height-10] #bottom right
+        pt_D = [width * 0.75, height * 0.6] #top right
+
         input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
         output_pts = np.float32([[0, 0],
                         [0, height - 1],
