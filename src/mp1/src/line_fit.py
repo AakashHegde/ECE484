@@ -45,6 +45,7 @@ def line_fit(binary_warped):
 
 	# Step through the windows one by one
 	for window in range(nwindows-1,0,-1):
+			# margin = 150 - (11 * (nwindows - window))
 			# Identify window boundaries in x and y (and right and left)
 			##TO DO
 			high_y = window_height * window
@@ -85,7 +86,7 @@ def line_fit(binary_warped):
 	# Concatenate the arrays of indices
 	left_lane_inds = np.concatenate(left_lane_inds)
 	right_lane_inds = np.concatenate(right_lane_inds)
-	# print(left_lane_inds)
+	# print(left_lane_inds, right_lane_inds)
 
 	# Extract left and right line pixel positions
 	leftx = nonzerox[left_lane_inds]
@@ -101,6 +102,7 @@ def line_fit(binary_warped):
 	##TODO
 			left_fit = np.polyfit(leftx, lefty, 2)
 			right_fit = np.polyfit(rightx, righty, 2)
+			# print(left_fit, right_fit)
 	####
 	except TypeError:
 			print("Unable to detect lanes")
