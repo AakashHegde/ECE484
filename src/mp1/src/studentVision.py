@@ -130,6 +130,18 @@ class lanenet_detector():
 
         #1. Visually determine 4 source points and 4 destination points
         
+        # gazebo
+        pt_A = [width * 0.35, height * 0.55]
+        pt_B = [0, height-1]
+        pt_C = [width - 1, height - 1]
+        pt_D = [width * 0.65, height * 0.55]
+
+        # gazebo 2
+        # pt_A = [290, 230] #top left
+        # pt_B = [0, 400] #bottom left
+        # pt_C = [600, 400] #bottom right
+        # pt_D = [327, 230] #top right
+
         # rosbag 0056 and 0011
         # pt_A = [width * 0.41, height * 0.55] #top left
         # pt_B = [width*0.20, height-1] #bottom left
@@ -141,17 +153,6 @@ class lanenet_detector():
         # pt_B = [width*0.20, height-1] #bottom left
         # pt_C = [width*0.75, height - 1] #bottom right
         # pt_D = [width * 0.6, height * 0.5] #top right
-
-        #gazebo
-        # pt_A = [width * 0.45, height * 0.53] #top left
-        # pt_B = [0, height*0.95] #bottom left
-        # pt_C = [width*0.6, height*0.95] #bottom right
-        # pt_D = [width * 0.6, height * 0.53] #top right
-
-        pt_A = [290, 230] #top left
-        pt_B = [0, 400] #bottom left
-        pt_C = [600, 400] #bottom right
-        pt_D = [327, 230] #top right
 
         input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
         output_pts = np.float32([[0, 0],
