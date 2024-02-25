@@ -41,6 +41,15 @@ class vehicleController():
 
         ####################### TODO: Your TASK 1 code starts Here #######################
         pos_x, pos_y, vel, yaw = 0, 0, 0, 0
+        currState = self.getModelState()
+        pos_x = currentPose.pose.position.x
+        pos_y = currentPose.pose.position.y
+        pos_z = currentPose.pose.position.z
+        vel = math.sqrt(pow(currentPose.twist.linear.x, 2) + pow(currentPose.twist.linear.y, 2) + pow(currentPose.twist.linear.z, 2))
+        
+
+        [roll, pitch, yaw] = quaternion_to_euler(currState.pose.orientation.x, currState.pose.orientation.y, currState.pose.orientation.z, currState.pose.orientation.w)
+        # print(pos_x, pos_y, vel, yaw)
 
         ####################### TODO: Your Task 1 code ends Here #######################
 
@@ -51,8 +60,19 @@ class vehicleController():
     def longititudal_controller(self, curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints):
 
         ####################### TODO: Your TASK 2 code starts Here #######################
-        target_velocity = 10
+        target_velocity = 15
 
+        look_ahead = 5
+        if(len(future_unreached_waypoints) <= look_ahead):
+            decision_waypoint = future_unreached_waypoints[-1]
+        else:
+            decision_waypoint = future_unreached_waypoints[look_ahead]
+        
+        # decision_waypoint = future_unreached_waypoints[look_ahead]
+        if(abs(curr_x - decision_waypoint[0]) > 5 and abs(curr_y - decision_waypoint[1]) > 5):
+            target_velocity = 8
+
+        # print(future_unreached_waypoints[0])
 
         ####################### TODO: Your TASK 2 code ends Here #######################
         return target_velocity
@@ -63,6 +83,16 @@ class vehicleController():
 
         ####################### TODO: Your TASK 3 code starts Here #######################
         target_steering = 0
+
+        ld = math.sqrt(pow(target_point[0] - curr_x, 2) + pow(target_point[1] - curr_y, 2))
+        # print(ld)
+        
+
+        alpha = math.atan2(target_point[1] - curr_y, target_point[0] - curr_x) - curr_yaw
+
+        target_steering = math.atan((2 * self.L * math.sin(alpha))/ld)
+        # print(target_steering)
+        # print(curr_yaw)
 
         ####################### TODO: Your TASK 3 code starts Here #######################
         return target_steering
@@ -82,10 +112,12 @@ class vehicleController():
         # Acceleration Profile
         if self.log_acceleration:
             acceleration = (curr_vel- self.prev_vel) * 100 # Since we are running in 100Hz
+        # print((curr_vel- self.prev_vel) * 100)
 
-
+        self.prev_vel = curr_vel
 
         target_velocity = self.longititudal_controller(curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints)
+        # print(target_velocity)
         target_steering = self.pure_pursuit_lateral_controller(curr_x, curr_y, curr_yaw, target_point, future_unreached_waypoints)
 
 
