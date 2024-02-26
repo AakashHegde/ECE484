@@ -8,6 +8,9 @@ import math
 from util import euler_to_quaternion, quaternion_to_euler
 import time
 
+import matplotlib.pyplot as plt
+from waypoint_list import WayPoints
+
 class vehicleController():
 
     def __init__(self):
@@ -16,6 +19,9 @@ class vehicleController():
         self.prev_vel = 0
         self.L = 1.75 # Wheelbase, can be get from gem_control.py
         self.log_acceleration = False
+
+        self.logx = []
+        self.logy = []
 
     def getModelState(self):
         # Get the current state of the vehicle
@@ -60,7 +66,7 @@ class vehicleController():
     def longititudal_controller(self, curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints):
 
         ####################### TODO: Your TASK 2 code starts Here #######################
-        target_velocity = 15
+        target_velocity = 12
 
         look_ahead = 5
         if(len(future_unreached_waypoints) <= look_ahead):
@@ -108,6 +114,8 @@ class vehicleController():
         # Output: None
 
         curr_x, curr_y, curr_vel, curr_yaw = self.extract_vehicle_info(currentPose)
+        self.logx.append(curr_x)
+        self.logy.append(curr_y)
 
         # Acceleration Profile
         if self.log_acceleration:
@@ -133,3 +141,11 @@ class vehicleController():
         newAckermannCmd = AckermannDrive()
         newAckermannCmd.speed = 0
         self.controlPub.publish(newAckermannCmd)
+
+        # Plot graph for Problem 7
+        waypoints = WayPoints()
+        pos_list = waypoints.getWayPoints()
+        plt.plot(self.logx, self.logy)
+        plt.plot([x[0] for x in pos_list], [x[1] for x in pos_list], '*')
+        plt.plot([0],[-98], '.')
+        plt.show()
