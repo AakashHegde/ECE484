@@ -66,7 +66,7 @@ class vehicleController():
     def longititudal_controller(self, curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints):
 
         ####################### TODO: Your TASK 2 code starts Here #######################
-        target_velocity = 12
+        target_velocity = 16
 
         look_ahead = 5
         if(len(future_unreached_waypoints) <= look_ahead):
@@ -76,7 +76,7 @@ class vehicleController():
         
         # decision_waypoint = future_unreached_waypoints[look_ahead]
         if(abs(curr_x - decision_waypoint[0]) > 5 and abs(curr_y - decision_waypoint[1]) > 5):
-            target_velocity = 8
+            target_velocity = 10
 
         # print(future_unreached_waypoints[0])
 
@@ -89,10 +89,13 @@ class vehicleController():
 
         ####################### TODO: Your TASK 3 code starts Here #######################
         target_steering = 0
-
-        ld = math.sqrt(pow(target_point[0] - curr_x, 2) + pow(target_point[1] - curr_y, 2))
-        # print(ld)
+        lookahead_point = target_point
         
+        if(len(future_unreached_waypoints) >= 2):
+            lookahead_point = [(target_point[0] + future_unreached_waypoints[1][0])/2, (target_point[1] + future_unreached_waypoints[1][1])/2]
+        
+        ld = math.sqrt(pow(lookahead_point[0] - curr_x, 2) + pow(lookahead_point[1] - curr_y, 2))
+        # print(ld)
 
         alpha = math.atan2(target_point[1] - curr_y, target_point[0] - curr_x) - curr_yaw
 
