@@ -22,6 +22,7 @@ class vehicleController():
 
         self.logx = []
         self.logy = []
+        self.log_accel = []
 
     def getModelState(self):
         # Get the current state of the vehicle
@@ -66,7 +67,9 @@ class vehicleController():
     def longititudal_controller(self, curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints):
 
         ####################### TODO: Your TASK 2 code starts Here #######################
-        target_velocity = 16
+        high_speed = 16
+        low_speed = 10
+        target_velocity = low_speed
 
         look_ahead = 5
         if(len(future_unreached_waypoints) <= look_ahead):
@@ -75,8 +78,16 @@ class vehicleController():
             decision_waypoint = future_unreached_waypoints[look_ahead]
         
         # decision_waypoint = future_unreached_waypoints[look_ahead]
-        if(abs(curr_x - decision_waypoint[0]) > 5 and abs(curr_y - decision_waypoint[1]) > 5):
-            target_velocity = 10
+        if(abs(curr_x - decision_waypoint[0]) > 5 and abs(curr_y - decision_waypoint[1]) > 5): # if curvve
+            if(target_velocity > low_speed):
+                target_velocity -= 2
+            else:
+                target_velocity = low_speed
+        else: # if straight road
+            if(target_velocity < high_speed):
+                target_velocity += 4
+            else:
+                target_velocity = high_speed
 
         # print(future_unreached_waypoints[0])
 
@@ -123,7 +134,9 @@ class vehicleController():
         # Acceleration Profile
         if self.log_acceleration:
             acceleration = (curr_vel- self.prev_vel) * 100 # Since we are running in 100Hz
-        # print((curr_vel- self.prev_vel) * 100)
+            if(acceleration >= 5):
+                print(acceleration)
+            self.log_accel.append(acceleration)
 
         self.prev_vel = curr_vel
 
@@ -146,9 +159,13 @@ class vehicleController():
         self.controlPub.publish(newAckermannCmd)
 
         # Plot graph for Problem 7
-        waypoints = WayPoints()
-        pos_list = waypoints.getWayPoints()
-        plt.plot(self.logx, self.logy)
-        plt.plot([x[0] for x in pos_list], [x[1] for x in pos_list], '*')
-        plt.plot([0],[-98], '.')
-        plt.show()
+        # waypoints = WayPoints()
+        # pos_list = waypoints.getWayPoints()
+        # plt.plot(self.logx, self.logy)
+        # plt.plot([x[0] for x in pos_list], [x[1] for x in pos_list], '*')
+        # plt.plot([0],[-98], '.')
+        # plt.show()
+        
+        # Plot graph for Problem 5
+        # plt.plot(self.log_accel)
+        # plt.show()
