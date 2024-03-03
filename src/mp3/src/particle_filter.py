@@ -10,11 +10,24 @@ from scipy.integrate import ode
 
 import random
 
+def quaternion_to_euler(x, y, z, w):
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll = np.arctan2(t0, t1)
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch = np.arcsin(t2)
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw = np.arctan2(t3, t4)
+    return [roll, pitch, yaw]
+
 def vehicle_dynamics(t, vars, vr, delta):
     curr_x = vars[0]
     curr_y = vars[1] 
     curr_theta = vars[2]
-    
+
     dx = vr * np.cos(curr_theta)
     dy = vr * np.sin(curr_theta)
     dtheta = delta
@@ -120,7 +133,25 @@ class particleFilter:
             Estimate the next state for each particle according to the control input from actual robot 
         """
         ## TODO #####
-        
+
+        if(len(self.control) == 0):
+            return
+
+        # vr = np.array([c[0] for c in self.control])
+        # delta = np.array([c[1] for c in self.control])
+        vr = self.control[-1][0]
+        delta = self.control[-1][1]
+       
+        for i in range(self.num_particles):
+            initR = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]    
+            r = ode(vehicle_dynamics)
+            r.set_initial_value(initR)
+            r.set_f_params(vr, delta)
+            val = r.integrate(r.t + 0.01)
+
+            self.particles[i].x = val[0]
+            self.particles[i].y = val[1]
+            self.particles[i].heading = val[2]
 
         ###############
         # pass
@@ -134,5 +165,12 @@ class particleFilter:
         count = 0 
         while True:
             ## TODO: (i) Implement Section 3.2.2. (ii) Display robot and particles on map. (iii) Compute and save position/heading error to plot. #####
-            
+            self.particleMotionModel()
+            reading = self.bob.read_sensor()
+            self.updateWeight(reading)
+            # self.particles = self.resampleParticle()
+            self.world.show_particles(self.particles)
+            self.world.show_estimated_location(self.particles)
+            self.world.show_robot(self.bob)
+            self.world.clear_objects()
             ###############
