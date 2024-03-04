@@ -165,6 +165,41 @@ class LidarProcessing:
         ## TODO: Add 4 additional sensor directions #####
         # Handle sensor at 4 diagnal direction
         
+        # Front Right
+        filter_FR = np.logical_and((x_points>0), (y_points<0))
+        filter_FR = np.logical_and(filter_FR, y_points == -1*x_points)
+        filter_FR = np.logical_and(filter_FR, pixel_vals > 128)
+        indices = np.argwhere(filter_FR).flatten()
+
+        self.x_front_right = np.mean(x_points[indices])
+        self.y_front_right = np.mean(y_points[indices])
+        
+        # Front Left   
+        filter_FL = np.logical_and((x_points>0), (y_points>0))
+        filter_FL = np.logical_and(filter_FL, y_points == x_points)
+        filter_FL = np.logical_and(filter_FL, pixel_vals > 128)
+        indices = np.argwhere(filter_FL).flatten()
+
+        self.x_front_left = np.mean(x_points[indices])
+        self.y_front_left = np.mean(y_points[indices])
+        
+        # Rear Right       
+        filter_RR = np.logical_and((x_points<0), (y_points<0))
+        filter_RR = np.logical_and(filter_RR, x_points == y_points)
+        filter_RR = np.logical_and(filter_RR, pixel_vals > 128)
+        indices = np.argwhere(filter_RR).flatten()
+
+        self.x_rear_right = np.mean(x_points[indices])
+        self.y_rear_left = np.mean(y_points[indices])
+
+        # Rear Left    
+        filter_RL = np.logical_and((x_points<0), (y_points>0))
+        filter_RL = np.logical_and(filter_RL, x_points -1*y_points)
+        filter_RL = np.logical_and(filter_RL, pixel_vals > 128)
+        indices = np.argwhere(filter_RL).flatten()
+
+        self.x_rear_left = np.mean(x_points[indices])
+        self.y_rear_right = np.mean(y_points[indices])
         
         ###############
 
