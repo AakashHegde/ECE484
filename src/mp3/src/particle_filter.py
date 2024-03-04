@@ -108,8 +108,17 @@ class particleFilter:
         """
 
         ## TODO #####
+        weights = []
+        for i in range(self.num_particles):
+            readings_particle = self.particles[i].read_sensor()
+            weights.append(self.weight_gaussian_kernel(readings_robot, readings_particle))
 
-
+        # Normalize the weights
+        norm = np.linalg.norm(weights)
+        norm_weights = weights / norm
+        for i in range(self.num_particles):
+            self.particles[i].weight = norm_weights[i]
+        
         ###############
         # pass
 
@@ -121,8 +130,34 @@ class particleFilter:
         particles_new = list()
 
         ## TODO #####
-        
 
+        weights = []
+        for i in range(self.num_particles):
+            weights.append(self.particles[i].weight)
+
+        rnd = np.random.uniform(0,1)
+        index = int(rnd * (self.num_particles - 1))
+        beta = 0.0
+        max_weight = max(weights)
+        for particle in self.particles:
+            beta += np.random.uniform(0,1) * 2.0 * max_weight
+            while beta > weights[index]:
+                beta -= weights[index]
+                index = (index + 1) % self.num_particles
+
+            particle = self.particles[index]
+            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit))
+
+        # cumsum = np.cumsum(weights)
+        # for i in range(self.num_particles):
+        #     rnd = np.random.uniform(0,cumsum[-1])
+        #     index = 0
+        #     for w in cumsum:
+        #         if w > rnd:
+        #             break
+        #         index += 1
+        #     particle = self.particles[index]
+        #     particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit))
         ###############
 
         self.particles = particles_new
@@ -168,7 +203,8 @@ class particleFilter:
             self.particleMotionModel()
             reading = self.bob.read_sensor()
             self.updateWeight(reading)
-            # self.particles = self.resampleParticle()
+            self.resampleParticle()
+
             self.world.show_particles(self.particles)
             self.world.show_estimated_location(self.particles)
             self.world.show_robot(self.bob)
