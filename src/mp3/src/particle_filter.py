@@ -44,13 +44,13 @@ class particleFilter:
         for i in range(num_particles):
 
             # (Default) The whole map
-            x = np.random.uniform(0, world.width)
-            y = np.random.uniform(0, world.height)
+            #x = np.random.uniform(0, world.width)
+            #y = np.random.uniform(0, world.height)
 
 
             ## first quadrant
-            # x = 
-            # y =
+            x = np.random.uniform(world.width/2, world.width)
+            y = np.random.uniform(world.height/2, world.height)
 
             particles.append(Particle(x = x, y = y, maze = world, sensor_limit = sensor_limit))
 
@@ -122,7 +122,7 @@ class particleFilter:
         ###############
         # pass
 
-    def resampleParticle(self):
+    def resampleParticle(self):  #########      wrong
         """
         Description:
             Perform resample to get a new list of particles 
@@ -135,34 +135,34 @@ class particleFilter:
         for i in range(self.num_particles):
             weights.append(self.particles[i].weight)
 
-        rnd = np.random.uniform(0,1)
-        index = int(rnd * (self.num_particles - 1))
-        beta = 0.0
-        max_weight = max(weights)
-        for particle in self.particles:
-            beta += np.random.uniform(0,1) * 2.0 * max_weight
-            while beta > weights[index]:
-                beta -= weights[index]
-                index = (index + 1) % self.num_particles
+        # rnd = np.random.uniform(0,1)
+        # index = int(rnd * (self.num_particles - 1))
+        # beta = 0.0
+        # max_weight = max(weights)
+        # for particle in self.particles:
+        #     beta += np.random.uniform(0,1) * 2.0 * max_weight
+        #     while beta > weights[index]:               # weights[index] = random weight
+        #         beta -= weights[index]
+        #         index = (index + 1) % self.num_particles
 
-            particle = self.particles[index]
-            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit))
-
-        # cumsum = np.cumsum(weights)
-        # for i in range(self.num_particles):
-        #     rnd = np.random.uniform(0,cumsum[-1])
-        #     index = 0
-        #     for w in cumsum:
-        #         if w > rnd:
-        #             break
-        #         index += 1
         #     particle = self.particles[index]
         #     particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit))
+
+        cumsum = np.cumsum(weights)
+        for i in range(self.num_particles):
+            rnd = np.random.uniform(0,cumsum[-1])    # random index = np.random.randint(0,cumsum[-1])
+            index = 0
+            for w in cumsum:
+                if w > rnd:
+                    break
+                index += 1
+            particle = self.particles[index]
+            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit))
         ###############
 
         self.particles = particles_new
 
-    def particleMotionModel(self):
+    def particleMotionModel(self):    ######### wrong
         """
         Description:
             Estimate the next state for each particle according to the control input from actual robot 
