@@ -151,6 +151,7 @@ class particleFilter:
         cumsum = np.cumsum(weights)
         for i in range(self.num_particles):
             rnd = np.random.uniform(0,cumsum[-1])    # random index = np.random.randint(0,cumsum[-1])
+            # rnd = np.random.rand() * cumsum[-1]
             index = 0
             for w in cumsum:
                 if w > rnd:
@@ -183,6 +184,10 @@ class particleFilter:
             r.set_initial_value(initR)
             r.set_f_params(vr, delta)
             val = r.integrate(r.t + 0.01)
+
+            # for c in self.control:
+            #     r.set_f_params(c[0],c[1])
+            #     val = r.integrate(r.t + 0.01)
 
             self.particles[i].x = val[0]
             self.particles[i].y = val[1]
