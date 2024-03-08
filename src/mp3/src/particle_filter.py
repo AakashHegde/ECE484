@@ -175,23 +175,30 @@ class particleFilter:
 
         # vr = np.array([c[0] for c in self.control])
         # delta = np.array([c[1] for c in self.control])
-        vr = self.control[-1][0]
-        delta = self.control[-1][1]
+        # vr = self.control[-1][0]
+        # delta = self.control[-1][1]
        
         for i in range(self.num_particles):
             initR = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]    
             r = ode(vehicle_dynamics)
             r.set_initial_value(initR)
-            r.set_f_params(vr, delta)
-            val = r.integrate(r.t + 0.01)
+            # r.set_f_params(vr, delta)
+            # val = r.integrate(r.t + 0.01)
 
-            # for c in self.control:
-            #     r.set_f_params(c[0],c[1])
-            #     val = r.integrate(r.t + 0.01)
+            for c in self.control:
+                r.set_f_params(c[0],c[1])
+                val = r.integrate(r.t + 0.01)
+
+            # # simpler equations
+            # self.particles[i].x += (c[0] * np.cos(c[1])) * 0.01
+            # self.particles[i].y += (c[0] * np.sin(c[1])) * 0.01
+            # self.particles[i].heading += c[1] * 0.01
 
             self.particles[i].x = val[0]
             self.particles[i].y = val[1]
             self.particles[i].heading = val[2]
+        
+        self.control = []
 
         ###############
         # pass
