@@ -201,6 +201,8 @@ class particleFilter:
             self.particles[i].x = val[0]
             self.particles[i].y = val[1]
             self.particles[i].heading = val[2]
+        
+        self.control = []
 
         ###############
         # 
