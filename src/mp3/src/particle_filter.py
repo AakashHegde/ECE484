@@ -122,7 +122,7 @@ class particleFilter:
         ###############
         # pass
 
-    def resampleParticle(self):  #########      wrong
+    def resampleParticle(self):  #########      pass?
         """
         Description:
             Perform resample to get a new list of particles 
@@ -150,7 +150,7 @@ class particleFilter:
 
         cumsum = np.cumsum(weights)
         for i in range(self.num_particles):
-            rnd = np.random.uniform(0,cumsum[-1])    # random index = np.random.randint(0,cumsum[-1])
+            rnd = np.random.uniform(cumsum[0],cumsum[-1])    # random index = np.random.randint(0,cumsum[-1])
             # rnd = np.random.rand() * cumsum[-1]
             index = 0
             for w in cumsum:
@@ -158,7 +158,7 @@ class particleFilter:
                     break
                 index += 1
             particle = self.particles[index]
-            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit))
+            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit,  noisy = False)) # noisy = True
         ###############
 
         self.particles = particles_new
@@ -177,24 +177,33 @@ class particleFilter:
         # delta = np.array([c[1] for c in self.control])
         vr = self.control[-1][0]
         delta = self.control[-1][1]
-       
         for i in range(self.num_particles):
-            initR = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]    
-            r = ode(vehicle_dynamics)
-            r.set_initial_value(initR)
-            r.set_f_params(vr, delta)
-            val = r.integrate(r.t + 0.01)
+            initR = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]
+            val = [initR[0], initR[1], initR[2]] 
+            for j in range(len(self.control)):
+                vr = self.control[j][0]                     # all controls vs last control
+                delta = self.control[j][1]
+                #r = ode(vehicle_dynamics)
+                #r.set_initial_value(initR)
+                #r.set_f_params(vr, delta)
 
-            # for c in self.control:
-            #     r.set_f_params(c[0],c[1])
-            #     val = r.integrate(r.t + 0.01)
+                val[0] += vr * np.cos(delta) * 0.01
+                val[1] += vr * np.sin(delta) * 0.01
+                val[2] += delta * 0.01
 
+                #val = r.integrate(r.t + 0.01)
+
+                # for c in self.control:
+                #     r.set_f_params(c[0],c[1])
+                #     val = r.integrate(r.t + 0.01)
+
+            # update step
             self.particles[i].x = val[0]
             self.particles[i].y = val[1]
             self.particles[i].heading = val[2]
 
         ###############
-        # pass
+        # 
 
 
     def runFilter(self):
