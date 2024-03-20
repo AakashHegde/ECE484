@@ -8,6 +8,8 @@ import shutil
 from std_msgs.msg import Float32MultiArray
 from scipy.integrate import ode
 
+import csv
+
 import random
 
 def quaternion_to_euler(x, y, z, w):
@@ -112,13 +114,13 @@ class particleFilter:
         for i in range(self.num_particles):
             readings_particle = self.particles[i].read_sensor()
             weights.append(self.weight_gaussian_kernel(readings_robot, readings_particle))
-
+        #print(weights)
         # Normalize the weights
-        norm = np.linalg.norm(weights)
+        norm = np.sum(weights)
         norm_weights = weights / norm
+        #assign normalized weights
         for i in range(self.num_particles):
             self.particles[i].weight = norm_weights[i]
-        
         ###############
         # pass
 
@@ -133,7 +135,9 @@ class particleFilter:
 
         weights = []
         for i in range(self.num_particles):
-            weights.append(self.particles[i].weight)
+            weights.append(self.particles[i].weight)  # normalize ?
+        norm = np.sum(weights)
+        norm_weights = weights / norm
 
         # rnd = np.random.uniform(0,1)
         # index = int(rnd * (self.num_particles - 1))
@@ -148,9 +152,9 @@ class particleFilter:
         #     particle = self.particles[index]
         #     particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit))
 
-        cumsum = np.cumsum(weights)
+        cumsum = np.cumsum(norm_weights)    # cumsum = np.cumsum(weights)
         for i in range(self.num_particles):
-            rnd = np.random.uniform(cumsum[0],cumsum[-1])    # random index = np.random.randint(0,cumsum[-1])
+            rnd = np.random.uniform(0, 1)        #rnd = np.random.uniform(cumsum[0],cumsum[-1])     random index = np.random.randint(0,cumsum[-1])     
             # rnd = np.random.rand() * cumsum[-1]
             index = 0
             for w in cumsum:
@@ -158,7 +162,7 @@ class particleFilter:
                     break
                 index += 1
             particle = self.particles[index]
-            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit,  noisy = False)) # noisy = True
+            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit,  noisy = True)) # noisy = True
         ###############
 
         self.particles = particles_new
@@ -175,8 +179,8 @@ class particleFilter:
 
         # vr = np.array([c[0] for c in self.control])
         # delta = np.array([c[1] for c in self.control])
-        vr = self.control[-1][0]
-        delta = self.control[-1][1]
+        #vr = self.control[-1][0]
+        #delta = self.control[-1][1]
         for i in range(self.num_particles):
             initR = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]
             val = [initR[0], initR[1], initR[2]] 
@@ -186,10 +190,10 @@ class particleFilter:
                 #r = ode(vehicle_dynamics)
                 #r.set_initial_value(initR)
                 #r.set_f_params(vr, delta)
-
-                val[0] += vr * np.cos(delta) * 0.01
-                val[1] += vr * np.sin(delta) * 0.01
+                val[0] += vr * np.cos(val[2]) * 0.01
+                val[1] += vr * np.sin(val[2]) * 0.01
                 val[2] += delta * 0.01
+                
 
                 #val = r.integrate(r.t + 0.01)
 
@@ -221,8 +225,12 @@ class particleFilter:
             self.updateWeight(reading)
             self.resampleParticle()
 
-            self.world.show_particles(self.particles)
+            self.world.show_particles(self.particles, show_frequency = 1)
             self.world.show_estimated_location(self.particles)
             self.world.show_robot(self.bob)
             self.world.clear_objects()
+            
+            
+            #distance = math.sqrt((self.bob.x - ) **2 + (self.bob.y - )**2)
+            
             ###############
