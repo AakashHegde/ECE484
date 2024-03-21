@@ -19,7 +19,7 @@ if __name__ == "__main__":
     targetState.pose.position.y = pos_list[pos_idx][1] + 100 - 100
 
     start = time.time()
-    rate = rospy.Rate(10)  # 10 Hz
+    rate = rospy.Rate(4)  # 10 Hz
 
     while not rospy.is_shutdown():
         rate.sleep()  # Wait a while before trying to get a new state

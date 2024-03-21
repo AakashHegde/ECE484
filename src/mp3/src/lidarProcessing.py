@@ -153,7 +153,13 @@ class LidarProcessing:
         self.x_rear = np.mean(x_points[indices])
         self.y_rear = np.mean(y_points[indices])
 
-        # Getting sensor reading for front       
+
+        #the car going forward along the X direction moves in the world frame -Y
+        #the car going backwards along the X direction moves in the world frame +Y
+        # the left of the car is in te the -X world direction
+        # the right of the car is in the +Y world direction
+
+        # Getting sensor reading for front          # -y world
         filter_front = np.logical_and((y_points>-0.1), (y_points<0.1))
         filter_front = np.logical_and(filter_front, x_points > 0)
         filter_front = np.logical_and(filter_front, pixel_vals > 128)
@@ -166,8 +172,8 @@ class LidarProcessing:
         # Handle sensor at 4 diagnal direction
         
         # Front Right
-        filter_FR = np.logical_and((x_points>0), (y_points<0))
-        filter_FR = np.logical_and(filter_FR, y_points == -1*x_points)
+        filter_FR = np.logical_and((x_points>0.1), (y_points<-0.1))
+        filter_FR = np.logical_and(filter_FR, abs(y_points - x_points) < 0.3)
         filter_FR = np.logical_and(filter_FR, pixel_vals > 128)
         indices = np.argwhere(filter_FR).flatten()
 
@@ -175,8 +181,8 @@ class LidarProcessing:
         self.y_front_right = np.mean(y_points[indices])
         
         # Front Left   
-        filter_FL = np.logical_and((x_points>0), (y_points>0))
-        filter_FL = np.logical_and(filter_FL, y_points == x_points)
+        filter_FL = np.logical_and((x_points>0.1), (y_points>0.1))
+        filter_FL = np.logical_and(filter_FL, abs(y_points - x_points) < 0.3)
         filter_FL = np.logical_and(filter_FL, pixel_vals > 128)
         indices = np.argwhere(filter_FL).flatten()
 
@@ -184,22 +190,22 @@ class LidarProcessing:
         self.y_front_left = np.mean(y_points[indices])
         
         # Rear Right       
-        filter_RR = np.logical_and((x_points<0), (y_points<0))
-        filter_RR = np.logical_and(filter_RR, x_points == y_points)
+        filter_RR = np.logical_and((x_points<-0.1), (y_points<-0.1))
+        filter_RR = np.logical_and(filter_RR, abs(y_points - x_points) < 0.3)
         filter_RR = np.logical_and(filter_RR, pixel_vals > 128)
         indices = np.argwhere(filter_RR).flatten()
 
         self.x_rear_right = np.mean(x_points[indices])
-        self.y_rear_left = np.mean(y_points[indices])
+        self.y_rear_right = np.mean(y_points[indices])
 
         # Rear Left    
-        filter_RL = np.logical_and((x_points<0), (y_points>0))
-        filter_RL = np.logical_and(filter_RL, x_points -1*y_points)
+        filter_RL = np.logical_and((x_points<-0.1), (y_points>0.1))
+        filter_RL = np.logical_and(filter_RL, abs(y_points - x_points) < 0.3)
         filter_RL = np.logical_and(filter_RL, pixel_vals > 128)
         indices = np.argwhere(filter_RL).flatten()
 
         self.x_rear_left = np.mean(x_points[indices])
-        self.y_rear_right = np.mean(y_points[indices])
+        self.y_rear_left = np.mean(y_points[indices])
         
         ###############
 
@@ -311,10 +317,10 @@ class LidarProcessing:
             rear_right = self.sensor_limit
         
         # 4 Directions
-        return [front*100, right*100, rear*100, left*100]
+        #return [front*100, right*100, rear*100, left*100]
         
         # 8 Directions
-        #return [front*100, right*100, rear*100, left*100, front_left * 100, front_right * 100, rear_left*100, rear_right*100]
+        return [front*100, right*100, rear*100, left*100, front_left * 100, front_right * 100, rear_left*100, rear_right*100]
 
 
         

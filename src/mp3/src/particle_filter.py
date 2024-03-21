@@ -8,6 +8,7 @@ import shutil
 from std_msgs.msg import Float32MultiArray
 from scipy.integrate import ode
 
+import json
 import matplotlib.pyplot as plt
 import csv
 import math
@@ -47,13 +48,13 @@ class particleFilter:
         for i in range(num_particles):
 
             # (Default) The whole map
-            #x = np.random.uniform(0, world.width)
-            #y = np.random.uniform(0, world.height)
+            x = np.random.uniform(0, world.width)
+            y = np.random.uniform(0, world.height)
 
 
             ## first quadrant
-            x = np.random.uniform(world.width/2, world.width)
-            y = np.random.uniform(world.height/2, world.height)
+            #x = np.random.uniform(world.width/2, world.width)
+            #y = np.random.uniform(world.height/2, world.height)
 
             particles.append(Particle(x = x, y = y, maze = world, sensor_limit = sensor_limit))
 
@@ -249,17 +250,26 @@ class particleFilter:
             heading_e.append(h)
 
 
-            f = open("plotD.txt", "a")
-            f.write(str(distance)+", ")
-            f.close()
 
-            f = open("plotH.txt", "a")
-            f.write(str(h)+", ")
-            f.close()
+            errors = [distance,h]
+            #f = open("plotD.json", "a")
+            
 
-            f = open("plotT.txt", "a")
-            f.write(str(time)+", ")
-            f.close()
+            with open('plotD.json', 'r') as f:
+                dic = json.load(f)
+            dic[time] = errors
+            with open('plotD.json', 'w') as f:
+                json.dump(dic,f)
+
+            #f.write(str(distance)+", ")
+
+            #f = open("plotH.json", "a")
+            #f.write(str(h)+", ")
+            #f.close()
+
+            #f = open("plotT.json", "a")
+            #f.write(str(time)+", ")
+            #f.close()
 
 
             ###############
