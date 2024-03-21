@@ -8,8 +8,9 @@ import shutil
 from std_msgs.msg import Float32MultiArray
 from scipy.integrate import ode
 
+import matplotlib.pyplot as plt
 import csv
-
+import math
 import random
 
 def quaternion_to_euler(x, y, z, w):
@@ -218,6 +219,11 @@ class particleFilter:
             Run PF localization
         """
         count = 0 
+        time = 0.01
+        distance_e = []
+        time_x = []
+        heading_e = []
+
         while True:
             ## TODO: (i) Implement Section 3.2.2. (ii) Display robot and particles on map. (iii) Compute and save position/heading error to plot. #####
             self.particleMotionModel()
@@ -226,11 +232,34 @@ class particleFilter:
             self.resampleParticle()
 
             self.world.show_particles(self.particles, show_frequency = 1)
-            self.world.show_estimated_location(self.particles)
+            [x,y,heading] = self.world.show_estimated_location(self.particles)
             self.world.show_robot(self.bob)
             self.world.clear_objects()
             
+            # timestep 0.01 seconds
+            time_x.append(time)
+            time += 0.01
             
-            #distance = math.sqrt((self.bob.x - ) **2 + (self.bob.y - )**2)
-            
+            # distance error
+            distance = math.sqrt((self.bob.x - x) **2 + (self.bob.y - y)**2)
+            distance_e.append(distance)
+
+            # heading error
+            h = abs(heading - self.bob.heading)/abs(self.bob.heading)
+            heading_e.append(h)
+
+
+            f = open("plotD.txt", "a")
+            f.write(str(distance)+", ")
+            f.close()
+
+            f = open("plotH.txt", "a")
+            f.write(str(h)+", ")
+            f.close()
+
+            f = open("plotT.txt", "a")
+            f.write(str(time)+", ")
+            f.close()
+
+
             ###############
