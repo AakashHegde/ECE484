@@ -20,9 +20,11 @@ class lanenet_detector():
         self.bridge = CvBridge()
         # NOTE
         # Uncomment this line for lane detection of GEM car in Gazebo
-        self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
+        # self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
         # Uncomment this line for lane detection of videos in rosbag
         # self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
+        # Uncomment this line for GEM car live lane detection
+        self.sub_image = rospy.Subscriber('/zed2/zed_node/rgb_raw/image_raw_color', Image, self.img_callback, queue_size=1)
         self.pub_image = rospy.Publisher("lane_detection/annotate", Image, queue_size=1)
         self.pub_bird = rospy.Publisher("lane_detection/birdseye", Image, queue_size=1)
         self.left_line = Line(n=5)
@@ -95,7 +97,7 @@ class lanenet_detector():
         whiteImg = cv2.inRange(hsvImg, lower_white, upper_white)
         binary_output = cv2.add(yellowImg, whiteImg)
 
-        return binary_output
+        return whiteImg
 
 
     def combinedBinaryImage(self, img):
@@ -131,10 +133,10 @@ class lanenet_detector():
         #1. Visually determine 4 source points and 4 destination points
         
         # gazebo
-        pt_A = [width * 0.35, height * 0.55]
-        pt_B = [0, height-1]
-        pt_C = [width - 1, height - 1]
-        pt_D = [width * 0.65, height * 0.55]
+        # pt_A = [width * 0.35, height * 0.55]
+        # pt_B = [0, height-1]
+        # pt_C = [width - 1, height - 1]
+        # pt_D = [width * 0.65, height * 0.55]
 
         # gazebo 2
         # pt_A = [290, 230] #top left
@@ -142,7 +144,7 @@ class lanenet_detector():
         # pt_C = [600, 400] #bottom right
         # pt_D = [327, 230] #top right
 
-        # rosbag 0056 and 0011
+        # # rosbag 0056 and 0011
         # pt_A = [width * 0.41, height * 0.55] #top left
         # pt_B = [width*0.20, height-1] #bottom left
         # pt_C = [width*0.75, height - 1] #bottom right
@@ -153,6 +155,12 @@ class lanenet_detector():
         # pt_B = [width*0.20, height-1] #bottom left
         # pt_C = [width*0.75, height - 1] #bottom right
         # pt_D = [width * 0.6, height * 0.5] #top right
+
+        # rosbag 0056 and 0011
+        pt_A = [width * 0.33, height * 0.6] #top left
+        pt_B = [width*0, height-1] #bottom left
+        pt_C = [width*1, height - 1] #bottom right
+        pt_D = [width * 0.66, height * 0.6] #top right 
 
         input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
         output_pts = np.float32([[0, 0],

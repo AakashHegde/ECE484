@@ -36,7 +36,7 @@ def line_fit(binary_warped):
 	leftx_current = leftx_base
 	rightx_current = rightx_base
 	# Set the width of the windows +/- margin
-	margin = 75
+	margin = 25
 	# Set minimum number of pixels found to recenter window
 	minpix = 25
 	# Create empty lists to receive left and right lane pixel indices
