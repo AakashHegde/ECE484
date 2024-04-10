@@ -314,39 +314,31 @@ class PurePursuit(object):
                     self.gem_enable = True
 
 
-            if(len(self.yList) == 0):
+            if(len(self.yList) <= 20):
                 continue
             
             self.path_points_x = np.array(self.yList) #changed from self.path_points_lon_x
             self.path_points_y = np.array(self.xList) #changed from self.path_points_lat_y
 
+            avg_x = np.average(self.path_points_x)
+            avg_y = np.average(self.path_points_y)
+            avg_angle = np.average(np.array(self.angleList))
+
+            avg_dist = self.dist((avg_x, avg_y), (0, 0))
+
             self.wp_size = len(self.path_points_x)
             self.dist_arr = np.zeros(self.wp_size)
 
-            # curr_x, curr_y, curr_yaw = self.get_gem_state()
             curr_x, curr_y, curr_yaw = [0, 0, 0]
-
-            # finding the distance of each way point from the current position
-            # for i in range(len(self.path_points_x)):
-            #     self.dist_arr[i] = self.dist((self.path_points_x[i], self.path_points_y[i]), (curr_x, curr_y))
             
             # Normalize the distance i.e. every pixel_to_dist pixels is 1 unit irl
-            pixel_to_dist = 1
+            pixel_to_dist = 100
             for i in range(len(self.path_points_x)):
                 self.dist_arr[i] = (self.dist((self.path_points_x[i], self.path_points_y[i]), (0, 0))) / pixel_to_dist
             # print(self.dist_arr)
             # finding those points which are less than the look ahead distance (will be behind and ahead of the vehicle)
             goal_arr = np.where( (self.dist_arr < self.look_ahead + 0.3) & (self.dist_arr > self.look_ahead - 0.3) )[0]
 
-            # finding the goal point which is the last in the set of points less than the lookahead distance
-            # for idx in goal_arr:
-            #     v1 = [self.path_points_x[idx]-curr_x , self.path_points_y[idx]-curr_y]
-            #     v2 = [np.cos(curr_yaw), np.sin(curr_yaw)]
-            #     temp_angle = self.find_angle(v1,v2)
-            #     # find correct look-ahead point by using heading information
-            #     if abs(temp_angle) < np.pi/2:
-            #         self.goal = idx
-            #         break
             self.goal = 0
 
 
@@ -357,10 +349,13 @@ class PurePursuit(object):
             # find the curvature and the angle 
             # alpha = self.heading_to_yaw(self.path_points_heading[self.goal]) - curr_yaw
 
-            L = self.dist_arr[self.goal]
-            alpha = self.angleList[self.goal]
+            # L = self.dist_arr[self.goal]
+            # alpha = self.angleList[self.goal]
 
-            #print(L, math.degrees(alpha))
+            L = avg_dist / pixel_to_dist
+            alpha = avg_angle
+
+            print(L, math.degrees(alpha))
 
             # empty the waypoints list
             self.xList = []
