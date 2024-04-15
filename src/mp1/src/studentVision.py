@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import time
 import math
 import numpy as np
@@ -9,10 +11,14 @@ from Line import Line
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Float32MultiArray
 from skimage import morphology
 
-
+class waypoint_type():
+    def __init__(self, x=0, y=0, angle=0):
+        self.x = x
+        self.y = y
+        self.angle = angle
 
 class lanenet_detector():
     def __init__(self):
@@ -32,6 +38,7 @@ class lanenet_detector():
         self.detected = False
         self.hist = True
 
+        self.pub_waypoint = rospy.Publisher("wheels/waypoints", Float32MultiArray, queue_size=1)
 
     def img_callback(self, data):
 
@@ -156,11 +163,16 @@ class lanenet_detector():
         # pt_C = [width*0.75, height - 1] #bottom right
         # pt_D = [width * 0.6, height * 0.5] #top right
 
-        # rosbag 0056 and 0011
+        # final project
         pt_A = [width * 0.33, height * 0.6] #top left
         pt_B = [width*0, height-1] #bottom left
         pt_C = [width*1, height - 1] #bottom right
-        pt_D = [width * 0.66, height * 0.6] #top right 
+        pt_D = [width * 0.66, height * 0.6] #top right
+
+        # pt_A = [width * 0.1, height * 0.8] #top left
+        # pt_B = [width*0, height-1] #bottom left
+        # pt_C = [width*1, height - 1] #bottom right
+        # pt_D = [width * 0.9, height * 0.8] #top right 
 
         input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
         output_pts = np.float32([[0, 0],
@@ -183,6 +195,7 @@ class lanenet_detector():
 
         binary_img = self.combinedBinaryImage(img)
         img_birdeye, M, Minv = self.perspective_transform(binary_img)
+        height, width = img_birdeye.shape[:2]
 
         if not self.hist:
             # Fit lane without previous result
@@ -237,6 +250,30 @@ class lanenet_detector():
             if ret is not None:
                 bird_fit_img = bird_fit(img_birdeye, ret, save_file=None)
                 combine_fit_img = final_viz(img, left_fit, right_fit, Minv)
+                # Extract left and right line pixel positions
+                leftx = nonzerox[left_lane_inds]
+                lefty = nonzeroy[left_lane_inds]
+                rightx = nonzerox[right_lane_inds]
+                righty = nonzeroy[right_lane_inds]
+
+                # x,y - x,y coordinates of the pixel in the image
+                x = leftx[10] + abs(rightx[10] - leftx[10]) / 2
+                y = (lefty[10] + righty[10]) / 2
+                
+                # calculate heading
+                bottom_centre = [width/2, height] #[x,y]
+
+                # corrected x, y - considering origin to be bottom centre of the image
+                x = x - bottom_centre[0]
+                y = bottom_centre[1] - y
+
+                # TODO: check heading
+                heading = math.atan2(x, y)
+                # print(math.degrees(heading))
+                #heading = math.atan2(righty[10] - lefty[10], rightx[10] - leftx[10])
+                msg = Float32MultiArray()
+                msg.data = [x, y, heading]
+                self.pub_waypoint.publish(msg) # Publish waypoint
             else:
                 print("Unable to detect lanes")
 

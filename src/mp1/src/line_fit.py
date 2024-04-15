@@ -3,6 +3,8 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import pickle
+import math
+import collections
 # from combined_thresh import combined_thresh
 # from perspective_transform import perspective_transform
 
@@ -12,15 +14,18 @@ def line_fit(binary_warped):
 	"""
 	Find and fit lane lines
 	"""
+	# print("Line fit")
 	# Assuming you have created a warped binary image called "binary_warped"
 	# Take a histogram of the bottom half of the image
 	histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
 	out_img = (np.dstack((binary_warped, binary_warped, binary_warped))*255).astype('uint8')
 	midpoint = np.int32(histogram.shape[0]/2)
 	# print(midpoint)
-	leftx_base = np.argmax(histogram[100:midpoint]) + 100
+	# Set the width of the windows +/- margin
+	margin = 25
+	leftx_base = np.argmax(histogram[margin:midpoint]) + margin
 	# print(leftx_base)
-	rightx_base = np.argmax(histogram[midpoint:-100]) + midpoint
+	rightx_base = np.argmax(histogram[midpoint:-margin]) + midpoint
 	# print(rightx_base)
 
 	# Choose the number of sliding windows
@@ -35,10 +40,9 @@ def line_fit(binary_warped):
 	# Current positions to be updated for each window
 	leftx_current = leftx_base
 	rightx_current = rightx_base
-	# Set the width of the windows +/- margin
-	margin = 25
+	
 	# Set minimum number of pixels found to recenter window
-	minpix = 25
+	minpix = 50
 	# Create empty lists to receive left and right lane pixel indices
 	left_lane_inds = []
 	right_lane_inds = []
@@ -94,6 +98,7 @@ def line_fit(binary_warped):
 	rightx = nonzerox[right_lane_inds]
 	righty = nonzeroy[right_lane_inds]
 
+	# print(left_lane_inds)
 	# Fit a second order polynomial to each using np.polyfit()
 	# If there isn't a good fit, meaning any of leftx, lefty, rightx, and righty are empty,
 	# the second order polynomial is unable to be sovled.
@@ -126,21 +131,27 @@ def tune_fit(binary_warped, left_fit, right_fit):
 	"""
 	Given a previously fit line, quickly try to find the line based on previous lines
 	"""
+	# return(None)
+	# print("Tune fit")
 	# Assume you now have a new warped binary image
 	# from the next frame of video (also called "binary_warped")
 	# It's now much easier to find line pixels!
 	nonzero = binary_warped.nonzero()
 	nonzeroy = np.array(nonzero[0])
 	nonzerox = np.array(nonzero[1])
-	margin = 100
-	left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] + margin)))
-	right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] + margin)))
+	margin = 25
+	# histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
+	# midpoint = np.int32(histogram.shape[0]/2)
+	left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] + margin)))# & nonzerox < midpoint)
+	right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] + margin)))# & nonzerox > midpoint)
 
 	# Again, extract left and right line pixel positions
 	leftx = nonzerox[left_lane_inds]
 	lefty = nonzeroy[left_lane_inds]
 	rightx = nonzerox[right_lane_inds]
 	righty = nonzeroy[right_lane_inds]
+	# print(leftx, rightx)
+	# print(leftx)
 
 	# If we don't find enough relevant points, return all None (this means error)
 	min_inds = 10
@@ -150,6 +161,12 @@ def tune_fit(binary_warped, left_fit, right_fit):
 	# Fit a second order polynomial to each
 	left_fit = np.polyfit(lefty, leftx, 2)
 	right_fit = np.polyfit(righty, rightx, 2)
+
+	# when both line snap together and become one, recalculate fit
+	if (left_fit == right_fit).all():
+	# if len(np.intersect1d(left_fit, right_fit)) > 15:
+		return None
+	
 	# Generate x and y values for plotting
 	ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
 	left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
@@ -199,6 +216,17 @@ def viz1(binary_warped, ret, save_file=None):
 		plt.savefig(save_file)
 	plt.gcf().clear()
 
+waypoint_arr_len = 40
+waypoint_arr_x = collections.deque(maxlen=waypoint_arr_len)
+waypoint_arr_y = collections.deque(maxlen=waypoint_arr_len)
+
+def draw_waypoint(img, x, y):
+	waypoint_arr_x.append(x)
+	waypoint_arr_y.append(y)
+	avg_x = np.average(waypoint_arr_x)
+	avg_y = np.average(waypoint_arr_y)
+	cv2.circle(img, (int(avg_x), int(avg_y)), 25, (0, 0, 255), -1)
+	return img
 
 def bird_fit(binary_warped, ret, save_file=None):
 	"""
@@ -227,7 +255,7 @@ def bird_fit(binary_warped, ret, save_file=None):
 
 	# Generate a polygon to illustrate the search window area
 	# And recast the x and y points into usable format for cv2.fillPoly()
-	margin = 100  # NOTE: Keep this in sync with *_fit()
+	margin = 25  # NOTE: Keep this in sync with *_fit()
 	left_line_window1 = np.array([np.transpose(np.vstack([left_fitx-margin, ploty]))])
 	left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx+margin, ploty])))])
 	left_line_pts = np.hstack((left_line_window1, left_line_window2))
@@ -235,9 +263,18 @@ def bird_fit(binary_warped, ret, save_file=None):
 	right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx+margin, ploty])))])
 	right_line_pts = np.hstack((right_line_window1, right_line_window2))
 
+	# Visualization of waypoints
+	leftx = nonzerox[left_lane_inds]
+	lefty = nonzeroy[left_lane_inds]
+	rightx = nonzerox[right_lane_inds]
+	righty = nonzeroy[right_lane_inds]
+	x = leftx[10] + abs(rightx[10] - leftx[10]) / 2
+	y = (lefty[10] + righty[10]) / 2
+	window_img = draw_waypoint(window_img, int(x), int(y))
+
 	# Draw the lane onto the warped blank image
-	cv2.fillPoly(window_img, np.int32([left_line_pts]), (0,255, 0))
-	cv2.fillPoly(window_img, np.int32([right_line_pts]), (0,255, 0))
+	# cv2.fillPoly(window_img, np.int32([left_line_pts]), (0,255, 0))
+	# cv2.fillPoly(window_img, np.int32([right_line_pts]), (0,255, 0))
 	result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
 
 	plt.imshow(result)
