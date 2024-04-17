@@ -11,7 +11,7 @@ from Line import Line
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
-from std_msgs.msg import Float32, Float32MultiArray
+from std_msgs.msg import Float32, Float32MultiArray, Bool
 from skimage import morphology
 
 class waypoint_type():
@@ -39,6 +39,13 @@ class lanenet_detector():
         self.hist = True
 
         self.pub_waypoint = rospy.Publisher("wheels/waypoints", Float32MultiArray, queue_size=1)
+        self.sub_image = rospy.Subscriber('object_detection/detection_status', Bool, self.object_detection_callback, queue_size=1)
+
+    def object_detection_callback(self, data):
+        if(data.data):
+            print('STOP!')
+        else:
+            print('GO!')
 
     def img_callback(self, data):
 

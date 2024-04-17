@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import pickle
 import math
+import collections
 # from combined_thresh import combined_thresh
 # from perspective_transform import perspective_transform
 
@@ -215,6 +216,17 @@ def viz1(binary_warped, ret, save_file=None):
 		plt.savefig(save_file)
 	plt.gcf().clear()
 
+waypoint_arr_len = 40
+waypoint_arr_x = collections.deque(maxlen=waypoint_arr_len)
+waypoint_arr_y = collections.deque(maxlen=waypoint_arr_len)
+
+def draw_waypoint(img, x, y):
+	waypoint_arr_x.append(x)
+	waypoint_arr_y.append(y)
+	avg_x = np.average(waypoint_arr_x)
+	avg_y = np.average(waypoint_arr_y)
+	cv2.circle(img, (int(avg_x), int(avg_y)), 25, (0, 0, 255), -1)
+	return img
 
 def bird_fit(binary_warped, ret, save_file=None):
 	"""
@@ -256,14 +268,13 @@ def bird_fit(binary_warped, ret, save_file=None):
 	lefty = nonzeroy[left_lane_inds]
 	rightx = nonzerox[right_lane_inds]
 	righty = nonzeroy[right_lane_inds]
-	x = leftx[10] + abs(rightx[10] - leftx[10]) / 2
-	y = (lefty[10] + righty[10]) / 2
-	angle = math.atan2(righty[10] - lefty[10], rightx[10] - leftx[10])
-	cv2.circle(window_img, (int(x), int(y)), 25, (0, 0, 255), -1)
+	x = np.average(leftx) + abs(np.average(rightx) - np.average(leftx)) / 2
+	y = (np.average(lefty) + np.average(righty)) / 2
+	window_img = draw_waypoint(window_img, int(x), int(y))
 
 	# Draw the lane onto the warped blank image
-	cv2.fillPoly(window_img, np.int32([left_line_pts]), (0,255, 0))
-	cv2.fillPoly(window_img, np.int32([right_line_pts]), (0,255, 0))
+	# cv2.fillPoly(window_img, np.int32([left_line_pts]), (0,255, 0))
+	# cv2.fillPoly(window_img, np.int32([right_line_pts]), (0,255, 0))
 	result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
 
 	plt.imshow(result)
