@@ -268,8 +268,8 @@ def bird_fit(binary_warped, ret, save_file=None):
 	lefty = nonzeroy[left_lane_inds]
 	rightx = nonzerox[right_lane_inds]
 	righty = nonzeroy[right_lane_inds]
-	x = leftx[10] + abs(rightx[10] - leftx[10]) / 2
-	y = (lefty[10] + righty[10]) / 2
+	x = np.average(leftx) + abs(np.average(rightx) - np.average(leftx)) / 2
+	y = (np.average(lefty) + np.average(righty)) / 2
 	window_img = draw_waypoint(window_img, int(x), int(y))
 
 	# Draw the lane onto the warped blank image
