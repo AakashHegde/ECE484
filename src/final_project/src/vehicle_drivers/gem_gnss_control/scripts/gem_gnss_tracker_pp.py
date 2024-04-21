@@ -143,8 +143,8 @@ class PurePursuit(object):
 
         self.sub_image = rospy.Subscriber('object_detection/detection_status', Bool, self.object_detection_callback, queue_size=1)
 
-        self.desired_speed = 0.5 # m/s, reference speed
-        self.max_accel     = 0.3 # % of acceleration
+        self.desired_speed = 1.5  # m/s, reference speed
+        self.max_accel     = 0.48 # % of acceleration
         self.pid_speed     = PID(0.5, 0.0, 0.1, wg=20)
         self.speed_filter  = OnlineFilter(1.2, 30, 4)
 
@@ -377,7 +377,6 @@ class PurePursuit(object):
             k       = 0.41 
             angle_i = math.atan((k * 2 * self.wheelbase * math.sin(alpha)) / L) 
             angle   = angle_i*2
-            angle   = 0
             # ----------------- tuning this part as needed -----------------
 
             f_delta = round(np.clip(angle, -0.61, 0.61), 3)
@@ -401,17 +400,14 @@ class PurePursuit(object):
             filt_vel     = self.speed_filter.get_data(self.speed)
 
             if self.colision == 1:
-                self.brake_cmd.f64_cmd = 0.6
+                self.brake_cmd.f64_cmd = 0.75
                 output_accel = 0
                 print("braking!")
-            # elif self.colision == 1 and self.speed == 0:
-            #     output_accel = 0
             else:
                 self.brake_cmd.f64_cmd = 0
                 # if self.speed < 1.5:
                 # output_accel = self.pid_speed.get_control(current_time, self.desired_speed - filt_vel)
                 output_accel = 0.1
-                print(output_accel)
                 # else:
                 #     output_accel = 0
 
@@ -428,8 +424,8 @@ class PurePursuit(object):
             else:
                 self.turn_cmd.ui16_cmd = 0 # turn right
             
-            # if self.brake_cmd.f64_cmd != 0:
-            self.accel_cmd.f64_cmd = 0.1
+            self.accel_cmd.f64_cmd = 0.4
+            print(self.accel_cmd.f64_cmd)
             self.steer_cmd.angular_position = np.radians(steering_angle)
             self.accel_pub.publish(self.accel_cmd)
             self.steer_pub.publish(self.steer_cmd)
