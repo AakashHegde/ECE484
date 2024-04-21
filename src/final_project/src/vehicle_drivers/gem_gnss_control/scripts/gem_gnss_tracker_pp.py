@@ -130,6 +130,8 @@ class PurePursuit(object):
         self.xList = []
         self.yList = []
         self.angleList = []
+        self.colision = 0
+
 
         
         # read waypoints into the system 
@@ -139,8 +141,10 @@ class PurePursuit(object):
         # subscriben to waypoint rostopic that we made up
         self.waypoint_sub = rospy.Subscriber("wheels/waypoints", Float32MultiArray, self.waypoint_callback)
 
-        self.desired_speed = 1.5  # m/s, reference speed
-        self.max_accel     = 0.48 # % of acceleration
+        self.sub_image = rospy.Subscriber('object_detection/detection_status', Bool, self.object_detection_callback, queue_size=1)
+
+        self.desired_speed = 0.5 # m/s, reference speed
+        self.max_accel     = 0.3 # % of acceleration
         self.pid_speed     = PID(0.5, 0.0, 0.1, wg=20)
         self.speed_filter  = OnlineFilter(1.2, 30, 4)
 
@@ -187,6 +191,13 @@ class PurePursuit(object):
         self.steer_cmd.angular_position = 0.0 # radians, -: clockwise, +: counter-clockwise
         self.steer_cmd.angular_velocity_limit = 2.0 # radians/second
 
+    def object_detection_callback(self, data):
+        if(data.data):
+            # print('STOP!')
+            self.colision = 1  
+        else:
+            # print('GO!')
+            self.colision = 0
 
     def inspva_callback(self, inspva_msg):
         self.lat     = inspva_msg.latitude  # latitude
@@ -366,6 +377,7 @@ class PurePursuit(object):
             k       = 0.41 
             angle_i = math.atan((k * 2 * self.wheelbase * math.sin(alpha)) / L) 
             angle   = angle_i*2
+            angle   = 0
             # ----------------- tuning this part as needed -----------------
 
             f_delta = round(np.clip(angle, -0.61, 0.61), 3)
@@ -382,18 +394,32 @@ class PurePursuit(object):
                 print("Crosstrack Error: " + str(ct_error))
                 print("Front steering angle: " + str(np.degrees(f_delta)) + " degrees")
                 print("Steering wheel angle: " + str(steering_angle) + " degrees" )
+                print("Brake status: " + str(self.brake_cmd.f64_cmd) )
                 print("\n")
 
             current_time = rospy.get_time()
             filt_vel     = self.speed_filter.get_data(self.speed)
-            output_accel = self.pid_speed.get_control(current_time, self.desired_speed - filt_vel)
 
-            if output_accel > self.max_accel:
-                output_accel = self.max_accel
+            if self.colision == 1:
+                self.brake_cmd.f64_cmd = 0.6
+                output_accel = 0
+                print("braking!")
+            # elif self.colision == 1 and self.speed == 0:
+            #     output_accel = 0
+            else:
+                self.brake_cmd.f64_cmd = 0
+                # if self.speed < 1.5:
+                # output_accel = self.pid_speed.get_control(current_time, self.desired_speed - filt_vel)
+                output_accel = 0.1
+                print(output_accel)
+                # else:
+                #     output_accel = 0
 
-            if output_accel < 0.3:
-                output_accel = 0.3
+                if output_accel > self.max_accel:
+                    output_accel = self.max_accel
 
+                if output_accel < 0.3:
+                    output_accel = 0.3
 
             if (f_delta_deg <= 30 and f_delta_deg >= -30):
                 self.turn_cmd.ui16_cmd = 1
@@ -401,13 +427,14 @@ class PurePursuit(object):
                 self.turn_cmd.ui16_cmd = 2 # turn left
             else:
                 self.turn_cmd.ui16_cmd = 0 # turn right
-
-            self.accel_cmd.f64_cmd = output_accel
+            
+            # if self.brake_cmd.f64_cmd != 0:
+            self.accel_cmd.f64_cmd = 0.1
             self.steer_cmd.angular_position = np.radians(steering_angle)
             self.accel_pub.publish(self.accel_cmd)
             self.steer_pub.publish(self.steer_cmd)
             self.turn_pub.publish(self.turn_cmd)
-
+            self.brake_pub.publish(self.brake_cmd)
             self.rate.sleep()
 
 

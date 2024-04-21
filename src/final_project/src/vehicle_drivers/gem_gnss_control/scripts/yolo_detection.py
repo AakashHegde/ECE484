@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from ultralytics import YOLO
 from sensor_msgs.msg import Image
 import rospy
@@ -17,7 +19,7 @@ class ObjectDetection():
 
         # Object detected : area of bounding box in pixel square units
         # This will determine how close we get to the object before taking action
-        self.objects_to_area = {'stop sign': 3000, 'person': 4000, 'car': 7000}
+        self.objects_to_area = {'stop sign': 1000, 'person': 4000, 'car': 7000}
     
     def img_callback(self, data):
         try:
@@ -28,7 +30,7 @@ class ObjectDetection():
 
         raw_img = cv_image.copy()
 
-        results = self.model(raw_img, conf=0.6, verbose=False)
+        results = self.model(raw_img, conf=0.75, verbose=False)
 
         obj_det_status = Bool(False)
         for result in results:
@@ -51,4 +53,4 @@ if __name__ == '__main__':
     rospy.init_node('yolo_node', anonymous=True)
     ObjectDetection()
     while not rospy.core.is_shutdown():
-        rospy.rostime.wallsleep(1)
+        rospy.rostime.wallsleep(0.5)

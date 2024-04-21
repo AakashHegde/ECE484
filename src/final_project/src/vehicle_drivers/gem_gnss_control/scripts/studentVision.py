@@ -39,13 +39,13 @@ class lanenet_detector():
         self.hist = True
 
         self.pub_waypoint = rospy.Publisher("wheels/waypoints", Float32MultiArray, queue_size=1)
-        self.sub_image = rospy.Subscriber('object_detection/detection_status', Bool, self.object_detection_callback, queue_size=1)
+    #     self.sub_image = rospy.Subscriber('object_detection/detection_status', Bool, self.object_detection_callback, queue_size=1)
 
-    def object_detection_callback(self, data):
-        if(data.data):
-            print('STOP!')
-        else:
-            print('GO!')
+    # def object_detection_callback(self, data):
+    #     if(data.data):
+    #         print('STOP!')
+    #     else:
+    #         print('GO!')
 
     def img_callback(self, data):
 
