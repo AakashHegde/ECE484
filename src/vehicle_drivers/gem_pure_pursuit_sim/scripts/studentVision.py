@@ -43,7 +43,7 @@ class lanenet_detector():
 
         self.pub_waypoint = rospy.Publisher("wheels/waypoints", Float32MultiArray, queue_size=1)
 
-        self.waypoint_arr_len = 40
+        self.waypoint_arr_len = 5
         self.waypoint_arr_x = collections.deque(maxlen=self.waypoint_arr_len)
         self.waypoint_arr_y = collections.deque(maxlen=self.waypoint_arr_len)
         self.prev_coords = [0, 50, 0]
@@ -228,8 +228,8 @@ class lanenet_detector():
                     left_lane_inds = ret['left_lane_inds']
                     right_lane_inds = ret['right_lane_inds']
 
-                    left_fit = self.left_line.add_fit(left_fit)
-                    right_fit = self.right_line.add_fit(right_fit)
+                    # left_fit = self.left_line.add_fit(left_fit)
+                    # right_fit = self.right_line.add_fit(right_fit)
 
                     self.detected = True
 
@@ -256,7 +256,6 @@ class lanenet_detector():
             bird_fit_img = None
             combine_fit_img = None
             if ret is not None:
-                combine_fit_img = final_viz(img, left_fit, right_fit, Minv)
                 # Extract left and right line pixel positions
                 leftx = nonzerox[left_lane_inds]
                 lefty = nonzeroy[left_lane_inds]
@@ -270,9 +269,17 @@ class lanenet_detector():
                 if(np.average(leftx) > np.average(rightx)):
                     leftx = rightx
                     rightx = tempx
-                x = np.average(leftx) + abs(np.average(rightx) - np.average(leftx))/2
+                #x = np.average(leftx) + abs(np.average(rightx) - np.average(leftx))/2
+
+                if len(leftx) > len(rightx):
+                    x = np.average(leftx)
+                else:
+                    x = np.average(rightx)
+                
+                # print(x)
+
                 # y = (np.average(lefty) + np.average(righty))/2
-                y = 50 # y does not matter anyway; we just want to turn on time
+                y = int(height*0.5) # y does not matter anyway; we just want to turn on time
 
                 self.waypoint_arr_x.append(x)
                 self.waypoint_arr_y.append(y)
@@ -283,6 +290,7 @@ class lanenet_detector():
                 bottom_centre = [width/2, height] #[x,y]
 
                 bird_fit_img = bird_fit(img_birdeye, ret, self.avg_x, self.avg_y, save_file=None)
+                combine_fit_img = final_viz(img, left_fit, right_fit, Minv, x, y)
 
                 # corrected x, y - considering origin to be bottom centre of the image
                 x = self.avg_x - bottom_centre[0]

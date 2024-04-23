@@ -54,15 +54,25 @@ class PurePursuit(object):
         self.yList = []
         self.angleList = []
 
+        self.colision = 0
+
         self.waypoint_sub = rospy.Subscriber("wheels/waypoints", Float32MultiArray, self.waypoint_callback)
         self.ackermann_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=1)
-        
+        self.sub_image = rospy.Subscriber('object_detection/detection_status', Bool, self.object_detection_callback, queue_size=1)
 
 
     def waypoint_callback(self, msg):
         self.xList.append(msg.data[0])
         self.yList.append(msg.data[1])
         self.angleList.append(msg.data[2])
+
+    def object_detection_callback(self, data):
+        if(data.data):
+            # print('STOP!')
+            self.colision = 1  
+        else:
+            # print('GO!')
+            self.colision = 0
         
     # import waypoints.csv into a list (path_points)
     def read_waypoints(self):
@@ -143,38 +153,46 @@ class PurePursuit(object):
             
             
             self.goal = 0
+            
 
             # finding the distance between the goal point and the vehicle
             # true look-ahead distance between a waypoint and current position
             L = avg_dist / pixel_to_dist
             alpha = avg_angle
-            print(L, math.degrees(alpha))
+            # print(L, math.degrees(alpha))
 
             # empty the waypoints list
             self.xList = []
             self.yList = []
             self.angleList = []
 
-            # transforming the goal point into the vehicle coordinate frame 
-            gvcx = self.path_points_x[self.goal] - curr_x
-            gvcy = self.path_points_y[self.goal] - curr_y
-            goal_x_veh_coord = gvcx*np.cos(curr_yaw) + gvcy*np.sin(curr_yaw)
-            goal_y_veh_coord = gvcy*np.cos(curr_yaw) - gvcx*np.sin(curr_yaw)
-
-            k       = 0.285
-            angle_i = math.atan((2 * k * self.wheelbase * math.sin(alpha)) / L) 
-            angle   = angle_i*2
-            angle   = round(np.clip(angle, -0.61, 0.61), 3)
-
-            #angle = math.atan2(xList[len(xList)-1] - xList[0], yList[len(xList)-1] - yList[0],)
+            if self.colision == 1:
+                speed = 0
+                print("braking!")
             
-            ct_error = round(np.sin(alpha) * L, 3)
+            else:
+                # transforming the goal point into the vehicle coordinate frame 
+                gvcx = self.path_points_x[self.goal] - curr_x
+                gvcy = self.path_points_y[self.goal] - curr_y
+                goal_x_veh_coord = gvcx*np.cos(curr_yaw) + gvcy*np.sin(curr_yaw)
+                goal_y_veh_coord = gvcy*np.cos(curr_yaw) - gvcx*np.sin(curr_yaw)
 
-            print("Crosstrack Error: " + str(ct_error))
-            # print(angle)
+                k       = 0.285
+                angle_i = math.atan((2 * k * self.wheelbase * math.sin(alpha)) / L) 
+                angle   = angle_i*2
+                angle   = round(np.clip(angle, -0.61, 0.61), 3)
+
+                #angle = math.atan2(xList[len(xList)-1] - xList[0], yList[len(xList)-1] - yList[0],)
+                
+                ct_error = round(np.sin(alpha) * L, 3)
+
+                print("Crosstrack Error: " + str(ct_error))
+                print(math.degrees(angle))
+
+                speed = 1.5
 
             # implement constant pure pursuit controller
-            self.ackermann_msg.speed          = 1
+            self.ackermann_msg.speed          = speed
             self.ackermann_msg.steering_angle = -angle
             self.ackermann_pub.publish(self.ackermann_msg)
 
