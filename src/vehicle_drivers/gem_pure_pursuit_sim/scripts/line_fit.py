@@ -53,7 +53,7 @@ def line_fit(binary_warped):
 			# Identify window boundaries in x and y (and right and left)
 			##TO DO
 			high_y = window_height * window
-			low_y = window_height * (window + 1) - 1
+			low_y = window_height * (window + 1)
 			leftx_low = leftx_current - margin
 			leftx_high = leftx_current + margin
 			rightx_low = rightx_current - margin
@@ -68,8 +68,8 @@ def line_fit(binary_warped):
 			####
 			# Identify the nonzero pixels in x and y within the window
 			##TO DO
-			nonzero_left_lane = ((nonzeroy <= low_y) & (nonzeroy >= high_y) & (nonzerox >= leftx_low) & (nonzerox < leftx_high)).nonzero()[0]
-			nonzero_right_lane = ((nonzeroy <= low_y) & (nonzeroy >= high_y) & (nonzerox >= rightx_low) & (nonzerox < rightx_high)).nonzero()[0]
+			nonzero_left_lane = ((nonzeroy <= low_y) & (nonzeroy >= high_y) & (nonzerox >= leftx_low) & (nonzerox <= leftx_high)).nonzero()[0]
+			nonzero_right_lane = ((nonzeroy <= low_y) & (nonzeroy >= high_y) & (nonzerox >= rightx_low) & (nonzerox <= rightx_high)).nonzero()[0]
 			####
 			# Append these indices to the lists
 			##TO DO
@@ -97,7 +97,7 @@ def line_fit(binary_warped):
 	lefty = nonzeroy[left_lane_inds]
 	rightx = nonzerox[right_lane_inds]
 	righty = nonzeroy[right_lane_inds]
-
+	#print(leftx, lefty)
 	# print(left_lane_inds)
 	# Fit a second order polynomial to each using np.polyfit()
 	# If there isn't a good fit, meaning any of leftx, lefty, rightx, and righty are empty,
@@ -228,7 +228,7 @@ def draw_waypoint(img, x, y):
 	cv2.circle(img, (int(avg_x), int(avg_y)), 25, (0, 0, 255), -1)
 	return img
 
-def bird_fit(binary_warped, ret, save_file=None):
+def bird_fit(binary_warped, ret, x, y, save_file=None):
 	"""
 	Visualize the predicted lane lines with margin, on binary warped image
 	save_file is a string representing where to save the image (if None, then just display)
@@ -264,12 +264,6 @@ def bird_fit(binary_warped, ret, save_file=None):
 	right_line_pts = np.hstack((right_line_window1, right_line_window2))
 
 	# Visualization of waypoints
-	leftx = nonzerox[left_lane_inds]
-	lefty = nonzeroy[left_lane_inds]
-	rightx = nonzerox[right_lane_inds]
-	righty = nonzeroy[right_lane_inds]
-	x = np.average(leftx) + abs(np.average(rightx) - np.average(leftx)) / 2
-	y = (np.average(lefty) + np.average(righty)) / 2
 	window_img = draw_waypoint(window_img, int(x), int(y))
 
 	# Draw the lane onto the warped blank image

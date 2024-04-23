@@ -113,7 +113,7 @@ class PurePursuit(object):
     def start_pp(self):
         
         while not rospy.is_shutdown():
-            if(len(self.yList) <= 20):
+            if(len(self.yList) <= 10):
                 continue
             # get current position and orientation in the world frame
             curr_x, curr_y, curr_yaw = self.get_gem_pose()

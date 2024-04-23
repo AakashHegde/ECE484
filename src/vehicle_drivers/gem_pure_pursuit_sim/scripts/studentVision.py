@@ -14,6 +14,8 @@ from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Float32, Float32MultiArray, Bool
 from skimage import morphology
 
+import collections
+
 class waypoint_type():
     def __init__(self, x=0, y=0, angle=0):
         self.x = x
@@ -40,6 +42,11 @@ class lanenet_detector():
         self.hist = True
 
         self.pub_waypoint = rospy.Publisher("wheels/waypoints", Float32MultiArray, queue_size=1)
+
+        self.waypoint_arr_len = 40
+        self.waypoint_arr_x = collections.deque(maxlen=self.waypoint_arr_len)
+        self.waypoint_arr_y = collections.deque(maxlen=self.waypoint_arr_len)
+        self.prev_coords = [0, 50, 0]
 
     def img_callback(self, data):
 
@@ -165,15 +172,15 @@ class lanenet_detector():
         # pt_D = [width * 0.6, height * 0.5] #top right
 
         # final project
-        pt_A = [width * 0.33, height * 0.6] #top left
-        pt_B = [width*0, height-1] #bottom left
-        pt_C = [width*1, height - 1] #bottom right
-        pt_D = [width * 0.66, height * 0.6] #top right
-
-        # pt_A = [width * 0.1, height * 0.8] #top left
+        # pt_A = [width * 0.33, height * 0.6] #top left
         # pt_B = [width*0, height-1] #bottom left
         # pt_C = [width*1, height - 1] #bottom right
-        # pt_D = [width * 0.9, height * 0.8] #top right 
+        # pt_D = [width * 0.66, height * 0.6] #top right
+
+        pt_A = [width * 0.1, height * 0.8] #top left
+        pt_B = [width*0, height-1] #bottom left
+        pt_C = [width*1, height - 1] #bottom right
+        pt_D = [width * 0.9, height * 0.8] #top right 
 
         input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
         output_pts = np.float32([[0, 0],
@@ -249,7 +256,6 @@ class lanenet_detector():
             bird_fit_img = None
             combine_fit_img = None
             if ret is not None:
-                bird_fit_img = bird_fit(img_birdeye, ret, save_file=None)
                 combine_fit_img = final_viz(img, left_fit, right_fit, Minv)
                 # Extract left and right line pixel positions
                 leftx = nonzerox[left_lane_inds]
@@ -260,16 +266,27 @@ class lanenet_detector():
                 # x,y - x,y coordinates of the pixel in the image
                 # x = leftx[10] + abs(rightx[10] - leftx[10]) / 2
                 # y = (lefty[10] + righty[10]) / 2
-
+                tempx = leftx
+                if(np.average(leftx) > np.average(rightx)):
+                    leftx = rightx
+                    rightx = tempx
                 x = np.average(leftx) + abs(np.average(rightx) - np.average(leftx))/2
-                y = (np.average(lefty) + np.average(righty))/2
+                # y = (np.average(lefty) + np.average(righty))/2
+                y = 50 # y does not matter anyway; we just want to turn on time
+
+                self.waypoint_arr_x.append(x)
+                self.waypoint_arr_y.append(y)
+                self.avg_x = np.average(self.waypoint_arr_x)
+                self.avg_y = np.average(self.waypoint_arr_y)
                 
                 # calculate heading
                 bottom_centre = [width/2, height] #[x,y]
 
+                bird_fit_img = bird_fit(img_birdeye, ret, self.avg_x, self.avg_y, save_file=None)
+
                 # corrected x, y - considering origin to be bottom centre of the image
-                x = x - bottom_centre[0]
-                y = bottom_centre[1] - y
+                x = self.avg_x - bottom_centre[0]
+                y = bottom_centre[1] - self.avg_y
                 # TODO: check heading
                 heading = math.atan2(x, y)
 
@@ -277,11 +294,15 @@ class lanenet_detector():
 
                 # print(math.degrees(heading))
                 #heading = math.atan2(righty[10] - lefty[10], rightx[10] - leftx[10])
+                self.prev_coords = [x, y, heading]
                 msg = Float32MultiArray()
                 msg.data = [x, y, heading]
                 self.pub_waypoint.publish(msg) # Publish waypoint
             else:
                 print("Unable to detect lanes")
+                msg = Float32MultiArray()
+                msg.data = self.prev_coords
+                self.pub_waypoint.publish(msg) # Publish waypoint
 
             return combine_fit_img, bird_fit_img
 
