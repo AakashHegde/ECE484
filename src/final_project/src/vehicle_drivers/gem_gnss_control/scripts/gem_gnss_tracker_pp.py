@@ -401,6 +401,7 @@ class PurePursuit(object):
 
             if self.colision == 1:
                 self.brake_cmd.f64_cmd = 0.75
+                self.accel_cmd.f64_cmd = 0
                 output_accel = 0
                 print("braking!")
             else:
@@ -411,11 +412,16 @@ class PurePursuit(object):
                 # else:
                 #     output_accel = 0
 
-                if output_accel > self.max_accel:
-                    output_accel = self.max_accel
+                # if output_accel > self.max_accel:
+                #     output_accel = self.max_accel
 
-                if output_accel < 0.3:
-                    output_accel = 0.3
+                # if output_accel < 0.3:
+                #     output_accel = 0.3
+
+                if(self.speed < 0.5):
+                    self.accel_cmd.f64_cmd = 0.35
+                else:
+                    self.accel_cmd.f64_cmd = 0.30
 
             if (f_delta_deg <= 30 and f_delta_deg >= -30):
                 self.turn_cmd.ui16_cmd = 1
@@ -424,9 +430,10 @@ class PurePursuit(object):
             else:
                 self.turn_cmd.ui16_cmd = 0 # turn right
             
-            self.accel_cmd.f64_cmd = 0.4
+            
+            
             print(self.accel_cmd.f64_cmd)
-            self.steer_cmd.angular_position = np.radians(steering_angle)
+            self.steer_cmd.angular_position = -np.radians(steering_angle)
             self.accel_pub.publish(self.accel_cmd)
             self.steer_pub.publish(self.steer_cmd)
             self.turn_pub.publish(self.turn_cmd)
