@@ -132,12 +132,6 @@ class PurePursuit(object):
         self.angleList = []
         self.colision = 0
 
-
-        
-        # read waypoints into the system 
-        # self.goal       = 0            
-        # self.read_waypoints() 
-
         # subscriben to waypoint rostopic that we made up
         self.waypoint_sub = rospy.Subscriber("wheels/waypoints", Float32MultiArray, self.waypoint_callback)
 
@@ -147,9 +141,6 @@ class PurePursuit(object):
         self.max_accel     = 0.48 # % of acceleration
         self.pid_speed     = PID(0.5, 0.0, 0.1, wg=20)
         self.speed_filter  = OnlineFilter(1.2, 30, 4)
-
-
-    
 
         # -------------------- PACMod setup --------------------
 
@@ -339,34 +330,15 @@ class PurePursuit(object):
 
             self.wp_size = len(self.path_points_x)
             self.dist_arr = np.zeros(self.wp_size)
-
-            curr_x, curr_y, curr_yaw = [0, 0, 0]
             
             # Normalize the distance i.e. every pixel_to_dist pixels is 1 unit irl
             pixel_to_dist = 100
-            for i in range(len(self.path_points_x)):
-                self.dist_arr[i] = (self.dist((self.path_points_x[i], self.path_points_y[i]), (0, 0))) / pixel_to_dist
-            # print(self.dist_arr)
-            # finding those points which are less than the look ahead distance (will be behind and ahead of the vehicle)
-            goal_arr = np.where( (self.dist_arr < self.look_ahead + 0.3) & (self.dist_arr > self.look_ahead - 0.3) )[0]
 
-            self.goal = 0
-
-
-            # finding the distance between the goal point and the vehicle
-            # true look-ahead distance between a waypoint and current position
-            # L = self.dist_arr[self.goal]
-
-            # find the curvature and the angle 
-            # alpha = self.heading_to_yaw(self.path_points_heading[self.goal]) - curr_yaw
-
-            # L = self.dist_arr[self.goal]
-            # alpha = self.angleList[self.goal]
-
+            # Find distance to waypoint
             L = avg_dist / pixel_to_dist
             alpha = avg_angle
 
-            print(L, math.degrees(alpha))
+            # print(L, math.degrees(alpha))
 
             # empty the waypoints list
             self.xList = []
@@ -387,7 +359,6 @@ class PurePursuit(object):
             steering_angle = self.front2steer(f_delta_deg)
 
             if(self.gem_enable == True):
-                print("Current index: " + str(self.goal))
                 print("Forward velocity: " + str(self.speed))
                 ct_error = round(np.sin(alpha) * L, 3)
                 print("Crosstrack Error: " + str(ct_error))
@@ -401,27 +372,15 @@ class PurePursuit(object):
 
             if self.colision == 1:
                 self.brake_cmd.f64_cmd = 0.75
-                self.accel_cmd.f64_cmd = 0
                 output_accel = 0
                 print("braking!")
             else:
                 self.brake_cmd.f64_cmd = 0
-                # if self.speed < 1.5:
                 # output_accel = self.pid_speed.get_control(current_time, self.desired_speed - filt_vel)
-                output_accel = 0.1
-                # else:
-                #     output_accel = 0
-
-                # if output_accel > self.max_accel:
-                #     output_accel = self.max_accel
-
-                # if output_accel < 0.3:
-                #     output_accel = 0.3
-
                 if(self.speed < 0.5):
-                    self.accel_cmd.f64_cmd = 0.35
+                    output_accel = 0.35
                 else:
-                    self.accel_cmd.f64_cmd = 0.30
+                    output_accel = 0.30
 
             if (f_delta_deg <= 30 and f_delta_deg >= -30):
                 self.turn_cmd.ui16_cmd = 1
@@ -431,7 +390,7 @@ class PurePursuit(object):
                 self.turn_cmd.ui16_cmd = 0 # turn right
             
             
-            
+            self.accel_cmd.f64_cmd = output_accel
             print(self.accel_cmd.f64_cmd)
             self.steer_cmd.angular_position = -np.radians(steering_angle)
             self.accel_pub.publish(self.accel_cmd)
