@@ -1,3 +1,4 @@
-# MP Release 24SP
+GEM development branch
 
-Please contact the course staff if you have any concerns.
+Main readme file: src/final_project/src/README.md
+Main scripts: src/final_project/src/vehicle_drivers/gem_gnss_control/scripts
