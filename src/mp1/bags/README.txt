@@ -1,0 +1,1 @@
+This folder used to contain rosbags that were essentially dashcam POV videos. 
